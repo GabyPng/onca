@@ -1,5 +1,9 @@
 # onca_lite
 
+<img width="1600" height="827" alt="WhatsApp Image 2026-07-21 at 1 24 42 PM" src="https://github.com/user-attachments/assets/ef0242ea-1964-44a3-86fe-fb5fbc12e9e5" />
+
+
+
 ## Instalar las dependencias
 pip install -r requirements.txt 
 
