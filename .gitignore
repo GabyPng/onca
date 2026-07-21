@@ -1,0 +1,5 @@
+src/__pycache__/*
+frontend/static/*
+frontend/static/data/*frontend/static/mapas/municipios.geojson
+frontend/static/mapas/estados.geojson
+.env

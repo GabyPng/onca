@@ -1,0 +1,23 @@
+# Dockerfile para el Backend (API de datos)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar requirements del backend
+COPY src/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar código del backend
+COPY src/ ./src/
+COPY frontend/static/data/ ./data/
+
+# Exponer puerto para API
+EXPOSE 8000
+
+# Comando por defecto - usar Flask directamente
+CMD ["python", "src/api.py"]

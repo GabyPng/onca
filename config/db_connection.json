@@ -1,0 +1,7 @@
+{
+    "host": "alpha.tamps.cinvestav.mx",
+    "port": 3306,
+    "user": "oncalite_dev",
+    "password": "FiTMKVo81P",
+    "database": "oncalite"
+}

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Onca Lite - Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <form method="POST">
+                <label for="cie10">CIE10</label>
+                <select name="cie10" id="cie10">
+                    <option value="C910">C910</option>
+                </select>
+
+                <label for="tipo_producto">Tipo de producto</label>
+                <select name="producto" id="tipo_producto" onchange="mostrarCamposPorProducto()">
+                    <option value="Mapa Folium" {{ 'selected' if form_values and form_values.producto == 'Mapa Folium' else '' }}>Mapa</option>
+                    <option value="Line plot" {{ 'selected' if form_values and form_values.producto == 'Line plot' else '' }}>Line plot</option>
+                    <option value="Box plot" {{ 'selected' if form_values and form_values.producto == 'Box plot' else '' }}>Box plot</option>
+                    <option value="Heatmap" {{ 'selected' if form_values and form_values.producto == 'Heatmap' else '' }}>Heatmap</option>
+                </select>
+
+                <label>Tipo de dato</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="tipo_dato" value="conteos" id="radio-conteos" {{ 'checked' if not form_values or form_values.tipo_dato == 'conteos' else '' }}> Conteos</label>
+                    <label><input type="radio" name="tipo_dato" value="tasa_cruda" id="radio-tasa-cruda" {{ 'checked' if form_values and form_values.tipo_dato == 'tasa_cruda' else '' }}> Tasa cruda</label>
+                    <label><input type="radio" name="tipo_dato" value="asmr" id="radio-asmr" {{ 'checked' if form_values and form_values.tipo_dato == 'asmr' else '' }}> ASMR</label>
+                </div>
+
+                <!-- Año único (para Mapa, Box plot, Heatmap) -->
+                <div id="campo-anio">
+                    <label for="anio">Año</label>
+                    <select name="anio" id="anio">
+                        <option value="2015" {{ 'selected' if form_values and form_values.anio == '2015' else '' }}>2015</option>
+                        <option value="2016" {{ 'selected' if form_values and form_values.anio == '2016' else '' }}>2016</option>
+                        <option value="2017" {{ 'selected' if form_values and form_values.anio == '2017' else '' }}>2017</option>
+                        <option value="2018" {{ 'selected' if form_values and form_values.anio == '2018' else '' }}>2018</option>
+                        <option value="2019" {{ 'selected' if form_values and form_values.anio == '2019' else '' }}>2019</option>
+                        <option value="2020" {{ 'selected' if not form_values or form_values.anio == '2020' else '' }}>2020</option>
+                        <option value="2021" {{ 'selected' if form_values and form_values.anio == '2021' else '' }}>2021</option>
+                        <option value="2022" {{ 'selected' if form_values and form_values.anio == '2022' else '' }}>2022</option>
+                    </select>
+                </div>
+
+                <!-- Año de inicio y final (para Line plot) -->
+                <div id="campo-anio-rango" style="display: none;">
+                    <label for="anio_ini">Año de inicio</label>
+                    <select name="anio_ini" id="anio_ini">
+                        <option value="2015" {{ 'selected' if form_values and form_values.anio_ini == '2015' else '' }}>2015</option>
+                        <option value="2016" {{ 'selected' if form_values and form_values.anio_ini == '2016' else '' }}>2016</option>
+                        <option value="2017" {{ 'selected' if form_values and form_values.anio_ini == '2017' else '' }}>2017</option>
+                        <option value="2018" {{ 'selected' if form_values and form_values.anio_ini == '2018' else '' }}>2018</option>
+                        <option value="2019" {{ 'selected' if form_values and form_values.anio_ini == '2019' else '' }}>2019</option>
+                        <option value="2020" {{ 'selected' if not form_values or form_values.anio_ini == '2020' else '' }}>2020</option>
+                        <option value="2021" {{ 'selected' if form_values and form_values.anio_ini == '2021' else '' }}>2021</option>
+                        <option value="2022" {{ 'selected' if form_values and form_values.anio_ini == '2022' else '' }}>2022</option>
+                    </select>
+
+                    <label for="anio_fin">Año final</label>
+                    <select name="anio_fin" id="anio_fin">
+                        <option value="2015" {{ 'selected' if form_values and form_values.anio_fin == '2015' else '' }}>2015</option>
+                        <option value="2016" {{ 'selected' if form_values and form_values.anio_fin == '2016' else '' }}>2016</option>
+                        <option value="2017" {{ 'selected' if form_values and form_values.anio_fin == '2017' else '' }}>2017</option>
+                        <option value="2018" {{ 'selected' if form_values and form_values.anio_fin == '2018' else '' }}>2018</option>
+                        <option value="2019" {{ 'selected' if form_values and form_values.anio_fin == '2019' else '' }}>2019</option>
+                        <option value="2020" {{ 'selected' if not form_values or form_values.anio_fin == '2020' else '' }}>2020</option>
+                        <option value="2021" {{ 'selected' if form_values and form_values.anio_fin == '2021' else '' }}>2021</option>
+                        <option value="2022" {{ 'selected' if form_values and form_values.anio_fin == '2022' else '' }}>2022</option>
+                    </select>
+                </div>
+
+                <label for="nivel">Nivel de visualización</label>
+                <select name="nivel" id="nivel" onchange="mostrarFiltrosNivel()">
+                    <option value="nacional" {{ 'selected' if not form_values or form_values.nivel == 'nacional' else '' }}>Nacional</option>
+                    <option value="estatal" {{ 'selected' if form_values and form_values.nivel == 'estatal' else '' }}>Estatal</option>
+                </select>
+
+                <!-- Campo para seleccionar estado (solo visible en modo estatal) -->
+                <div id="campo-estado" style="display: none;">
+                    <label for="estado">Seleccionar Estado</label>
+                    <select name="estado" id="estado">
+                        <option value="">Seleccionar estado...</option>
+                        <option value="01" {{ 'selected' if form_values and form_values.estado == '01' else '' }}>Aguascalientes</option>
+                        <option value="02" {{ 'selected' if form_values and form_values.estado == '02' else '' }}>Baja California</option>
+                        <option value="03" {{ 'selected' if form_values and form_values.estado == '03' else '' }}>Baja California Sur</option>
+                        <option value="04" {{ 'selected' if form_values and form_values.estado == '04' else '' }}>Campeche</option>
+                        <option value="05" {{ 'selected' if form_values and form_values.estado == '05' else '' }}>Coahuila</option>
+                        <option value="06" {{ 'selected' if form_values and form_values.estado == '06' else '' }}>Colima</option>
+                        <option value="07" {{ 'selected' if form_values and form_values.estado == '07' else '' }}>Chiapas</option>
+                        <option value="08" {{ 'selected' if form_values and form_values.estado == '08' else '' }}>Chihuahua</option>
+                        <option value="09" {{ 'selected' if form_values and form_values.estado == '09' else '' }}>Ciudad de México</option>
+                        <option value="10" {{ 'selected' if form_values and form_values.estado == '10' else '' }}>Durango</option>
+                        <option value="11" {{ 'selected' if form_values and form_values.estado == '11' else '' }}>Guanajuato</option>
+                        <option value="12" {{ 'selected' if form_values and form_values.estado == '12' else '' }}>Guerrero</option>
+                        <option value="13" {{ 'selected' if form_values and form_values.estado == '13' else '' }}>Hidalgo</option>
+                        <option value="14" {{ 'selected' if form_values and form_values.estado == '14' else '' }}>Jalisco</option>
+                        <option value="15" {{ 'selected' if form_values and form_values.estado == '15' else '' }}>México</option>
+                        <option value="16" {{ 'selected' if form_values and form_values.estado == '16' else '' }}>Michoacán</option>
+                        <option value="17" {{ 'selected' if form_values and form_values.estado == '17' else '' }}>Morelos</option>
+                        <option value="18" {{ 'selected' if form_values and form_values.estado == '18' else '' }}>Nayarit</option>
+                        <option value="19" {{ 'selected' if form_values and form_values.estado == '19' else '' }}>Nuevo León</option>
+                        <option value="20" {{ 'selected' if form_values and form_values.estado == '20' else '' }}>Oaxaca</option>
+                        <option value="21" {{ 'selected' if form_values and form_values.estado == '21' else '' }}>Puebla</option>
+                        <option value="22" {{ 'selected' if form_values and form_values.estado == '22' else '' }}>Querétaro</option>
+                        <option value="23" {{ 'selected' if form_values and form_values.estado == '23' else '' }}>Quintana Roo</option>
+                        <option value="24" {{ 'selected' if form_values and form_values.estado == '24' else '' }}>San Luis Potosí</option>
+                        <option value="25" {{ 'selected' if form_values and form_values.estado == '25' else '' }}>Sinaloa</option>
+                        <option value="26" {{ 'selected' if form_values and form_values.estado == '26' else '' }}>Sonora</option>
+                        <option value="27" {{ 'selected' if form_values and form_values.estado == '27' else '' }}>Tabasco</option>
+                        <option value="28" {{ 'selected' if form_values and form_values.estado == '28' else '' }}>Tamaulipas</option>
+                        <option value="29" {{ 'selected' if form_values and form_values.estado == '29' else '' }}>Tlaxcala</option>
+                        <option value="30" {{ 'selected' if form_values and form_values.estado == '30' else '' }}>Veracruz</option>
+                        <option value="31" {{ 'selected' if form_values and form_values.estado == '31' else '' }}>Yucatán</option>
+                        <option value="32" {{ 'selected' if form_values and form_values.estado == '32' else '' }}>Zacatecas</option>
+                    </select>
+                </div>
+
+                <label>Sexo</label>
+                <div class="radio-group">
+                    <label><input type="radio" name="sexo" value="hombres" {{ 'checked' if form_values and form_values.sexo == 'hombres' else '' }}> Hombres</label>
+                    <label><input type="radio" name="sexo" value="mujeres" {{ 'checked' if form_values and form_values.sexo == 'mujeres' else '' }}> Mujeres</label>
+                    <label><input type="radio" name="sexo" value="ambos" {{ 'checked' if not form_values or form_values.sexo == 'ambos' or form_values.sexo == None else '' }}> Ambos</label>                    
+                </div>
+
+                <label>Grupos de edad</label>
+                <select name="edad_ini" id="edad_ini">
+                    <option value="00" {{ 'selected' if not form_values or form_values.edad_ini == '00' or form_values.edad_ini == '0' else '' }}>00</option>
+                    <option value="05" {{ 'selected' if form_values and form_values.edad_ini == '05' else '' }}>05</option>
+                    <option value="10" {{ 'selected' if form_values and form_values.edad_ini == '10' else '' }}>10</option>
+                    <option value="15" {{ 'selected' if form_values and form_values.edad_ini == '15' else '' }}>15</option>
+                    <option value="20" {{ 'selected' if form_values and form_values.edad_ini == '20' else '' }}>20</option>
+                    <option value="25" {{ 'selected' if form_values and form_values.edad_ini == '25' else '' }}>25</option>
+                    <option value="30" {{ 'selected' if form_values and form_values.edad_ini == '30' else '' }}>30</option>
+                    <option value="35" {{ 'selected' if form_values and form_values.edad_ini == '35' else '' }}>35</option>
+                    <option value="40" {{ 'selected' if form_values and form_values.edad_ini == '40' else '' }}>40</option>
+                    <option value="45" {{ 'selected' if form_values and form_values.edad_ini == '45' else '' }}>45</option>
+                    <option value="50" {{ 'selected' if form_values and form_values.edad_ini == '50' else '' }}>50</option>
+                    <option value="55" {{ 'selected' if form_values and form_values.edad_ini == '55' else '' }}>55</option>
+                    <option value="60" {{ 'selected' if form_values and form_values.edad_ini == '60' else '' }}>60</option>
+                    <option value="65" {{ 'selected' if form_values and form_values.edad_ini == '65' else '' }}>65</option>
+                    <option value="70" {{ 'selected' if form_values and form_values.edad_ini == '70' else '' }}>70</option>
+                    <option value="75" {{ 'selected' if form_values and form_values.edad_ini == '75' else '' }}>75</option>
+                    <option value="80" {{ 'selected' if form_values and form_values.edad_ini == '80' else '' }}>80</option>
+                    <option value="85" {{ 'selected' if form_values and form_values.edad_ini == '85' else '' }}>85</option>
+                </select>
+                 a 
+                <select name="edad_fin" id="edad_fin">
+                    <option value="04" {{ 'selected' if not form_values or form_values.edad_fin == '04' or form_values.edad_fin == '125' else '' }}>04</option>
+                    <option value="09" {{ 'selected' if form_values and form_values.edad_fin == '09' else '' }}>09</option>
+                    <option value="14" {{ 'selected' if form_values and form_values.edad_fin == '14' else '' }}>14</option>
+                    <option value="19" {{ 'selected' if form_values and form_values.edad_fin == '19' else '' }}>19</option>
+                    <option value="24" {{ 'selected' if form_values and form_values.edad_fin == '24' else '' }}>24</option>
+                    <option value="29" {{ 'selected' if form_values and form_values.edad_fin == '29' else '' }}>29</option>
+                    <option value="34" {{ 'selected' if form_values and form_values.edad_fin == '34' else '' }}>34</option>
+                    <option value="39" {{ 'selected' if form_values and form_values.edad_fin == '39' else '' }}>39</option>
+                    <option value="44" {{ 'selected' if form_values and form_values.edad_fin == '44' else '' }}>44</option>
+                    <option value="49" {{ 'selected' if form_values and form_values.edad_fin == '49' else '' }}>49</option>
+                    <option value="54" {{ 'selected' if form_values and form_values.edad_fin == '54' else '' }}>54</option>
+                    <option value="59" {{ 'selected' if form_values and form_values.edad_fin == '59' else '' }}>59</option>
+                    <option value="64" {{ 'selected' if form_values and form_values.edad_fin == '64' else '' }}>64</option>
+                    <option value="69" {{ 'selected' if form_values and form_values.edad_fin == '69' else '' }}>69</option>
+                    <option value="74" {{ 'selected' if form_values and form_values.edad_fin == '74' else '' }}>74</option>
+                    <option value="79" {{ 'selected' if form_values and form_values.edad_fin == '79' else '' }}>79</option>
+                    <option value="84" {{ 'selected' if form_values and form_values.edad_fin == '84' else '' }}>84</option>
+                    <option value="89" {{ 'selected' if form_values and form_values.edad_fin == '89' else '' }}>89</option>
+                </select>
+
+                <button type="submit">Generar</button>
+            </form>
+        </div>
+
+        <!-- Panel derecho con pestañas -->
+        <div class="main-content">
+            <div class="tabs">
+                <button onclick="mostrarTab('producto')" id="btn-producto" class="active">Producto</button>
+                <button onclick="mostrarTab('datos')" id="btn-datos">Datos</button>
+            </div>
+
+            <div id="producto" class="tab-content">
+                {% if show_result %}
+                    <h3>Vista previa del producto</h3>
+                    {% if contenido %}
+                        {% if contenido.tipo == 'imagen' %}
+                            <div style="text-align: center;">
+                                <img src="{{ url_for('static', filename=contenido.ruta + contenido.archivo) }}" 
+                                     alt="Visualización" 
+                                     style="max-width: 100%; max-height: 600px; border: 1px solid #ddd;">
+                            </div>
+                        {% elif contenido.tipo == 'html_directo' %}
+                            <div style="width: 100%; height: 600px;">
+                                {{ contenido.contenido | safe }}
+                            </div>
+                        {% elif contenido.tipo == 'error' %}
+                            <div class="error-message" style="color: red; margin-top: 10px; padding: 10px; border: 1px solid red; background-color: #ffe6e6;">
+                                <p>Error: {{ contenido.mensaje }}</p>
+                            </div>
+                        {% else %}
+                            <iframe src="{{ url_for('static', filename=contenido.ruta + contenido.archivo) }}"
+                                    width="100%" height="600px" style="border:none;">
+                            </iframe>
+                        {% endif %}
+                    {% else %}
+                        <iframe src="{{ url_for('static', filename='mapas/placeholder.html') }}"
+                                width="100%" height="600px" style="border:none;">
+                        </iframe>
+                    {% endif %}
+                {% else %}
+                    <p>Selecciona parámetros y presiona "Generar" para visualizar el producto.</p>
+                {% endif %}
+            </div>
+
+    <div id="datos" class="tab-content" style="display: none;">
+           <h3>Datos Generados</h3>
+            <p>Los datos se han generado correctamente.</p>
+            <a href="/descargar_csv" class="download-btn">Descargar CSV</a>
+            <div class="tabla-datos">
+                <p>Cargando datos...</p>
+            </div>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                $.ajax({
+                    url: '/ver_datos',
+                    method: 'GET',
+                    success: function(data) {
+                        $('.tabla-datos').html(data);
+                    },
+                    error: function() {
+                        $('.tabla-datos').html('<p>Error al cargar los datos.</p>');
+                    }
+                });
+            });
+        </script>
+
+
+        </div>
+    </div>
+
+<script>
+    // Variables globales para las validaciones
+    let validacionEdad, validacionAnio;
+
+    function mostrarTab(tab) {
+        document.getElementById('producto').style.display = (tab === 'producto') ? 'block' : 'none';
+        document.getElementById('datos').style.display = (tab === 'datos') ? 'block' : 'none';
+
+        document.getElementById('btn-producto').classList.remove('active');
+        document.getElementById('btn-datos').classList.remove('active');
+
+        if (tab === 'producto') {
+            document.getElementById('btn-producto').classList.add('active');
+        } else {
+            document.getElementById('btn-datos').classList.add('active');
+        }
+    }
+
+    // Mostrar/Ocultar filtros según el nivel seleccionado
+    function mostrarFiltrosNivel() {
+        const nivelSelect = document.getElementById('nivel');
+        const campoEstado = document.getElementById('campo-estado');
+        
+        if (nivelSelect.value === 'estatal') {
+            campoEstado.style.display = 'block';
+        } else {
+            campoEstado.style.display = 'none';
+        }
+    }
+
+    // Mostrar/Ocultar campos según tipo de producto
+    function mostrarCamposPorProducto() {
+        const producto = document.getElementById('tipo_producto').value;
+        const campoAnio = document.getElementById('campo-anio');
+        const campoAnioRango = document.getElementById('campo-anio-rango');
+        // Deshabilita el ASMR si es Box plot
+        const radioAsmr = document.getElementById('radio-asmr');
+        
+        // Ocultar estatal si se elige mapa
+        const campoNivel = document.getElementById('nivel');
+
+        // Visualizacion estatal
+        let optEstatal = Array.from(campoNivel.options).find(opt => opt.value === 'estatal');
+        if(producto === 'Mapa Folium'){
+            // Mostrar la opcion estatal para Mapa 
+            if(!optEstatal){
+                let opt = document.createElement('option');
+                opt.value = 'estatal';
+                opt.text = 'Estatal';
+                campoNivel.add(opt);
+            }
+        }else{
+            // Si no es mapa, remover la opcion estatal
+            if(optEstatal){
+                campoNivel.remove(optEstatal.index);
+                if(campoNivel.value === 'estatal'){
+                    campoNivel.value = 'nacional';
+                }
+            }
+        }
+        
+        // Mostrar filtro año
+        if (producto === 'Mapa Folium') {
+            campoAnio.style.display = 'block';
+            campoAnioRango.style.display = 'none';
+            if (radioAsmr) radioAsmr.disabled = false;
+            // Mostrar filtros de nivel para Mapa Folium
+            mostrarFiltrosNivel();
+        } else if (producto === 'Line plot') {
+            campoAnio.style.display = 'none';
+            campoAnioRango.style.display = 'block';
+            if (radioAsmr) radioAsmr.disabled = false;
+        } else if (producto === 'Box plot') {
+            campoAnio.style.display = 'block';
+            campoAnioRango.style.display = 'none';
+            if (radioAsmr) {
+                radioAsmr.disabled = true;
+                // Si estaba seleccionado, cambiar a conteos
+                if (radioAsmr.checked) {
+                    document.getElementById('radio-conteos').checked = true;
+                }
+            }
+        } else if (producto === 'Heatmap') {
+            campoAnio.style.display = 'block';
+            campoAnioRango.style.display = 'none';
+            if (radioAsmr) radioAsmr.disabled = false;
+        } else {
+            campoAnio.style.display = 'none';
+            campoAnioRango.style.display = 'none';
+            if (radioAsmr) radioAsmr.disabled = false;
+        }
+    }
+
+    // Validación de rango de edad
+    function configurarValidacionEdad() {
+        const edadIni = document.getElementById('edad_ini');
+        const edadFin = document.getElementById('edad_fin');
+
+        function validarRangoEdad() {
+            const ini = parseInt(edadIni.value);
+            const fin = parseInt(edadFin.value);
+            
+            if (ini > fin) {
+                return false;
+            }
+            return true;
+        }
+
+        function mostrarErrorEdad(mensaje) {
+            // Remover error previo si existe
+            const errorPrevio = document.getElementById('error-edad');
+            if (errorPrevio) {
+                errorPrevio.remove();
+            }
+            
+            // Crear elemento de error
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'error-edad';
+            errorDiv.style.color = 'red';
+            errorDiv.style.fontWeight = 'bold';
+            errorDiv.style.marginTop = '5px';
+            errorDiv.textContent = mensaje;
+            
+            // Insertar después del campo edad_fin
+            edadFin.parentNode.insertBefore(errorDiv, edadFin.nextSibling);
+        }
+
+        function limpiarErrorEdad() {
+            const errorDiv = document.getElementById('error-edad');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        // Validar cuando cambian los selectores
+        edadIni.addEventListener('change', function() {
+            if (!validarRangoEdad()) {
+                mostrarErrorEdad('Error: La edad inicial no puede ser mayor que la edad final');
+            } else {
+                limpiarErrorEdad();
+            }
+        });
+
+        edadFin.addEventListener('change', function() {
+            if (!validarRangoEdad()) {
+                mostrarErrorEdad('Error: La edad inicial no puede ser mayor que la edad final');
+            } else {
+                limpiarErrorEdad();
+            }
+        });
+
+        // Retornar función para validar desde el formulario
+        return {
+            validar: validarRangoEdad,
+            mostrarError: mostrarErrorEdad,
+            limpiarError: limpiarErrorEdad
+        };
+    }
+
+    // Validación de rango de años
+    function configurarValidacionAnio() {
+        const anioIni = document.getElementById('anio_ini');
+        const anioFin = document.getElementById('anio_fin');
+
+        function validarRangoAnio() {
+            // Solo validar si ambos campos existen y están visibles
+            const rangoVisible = document.getElementById('campo-anio-rango').style.display !== 'none';
+            if (!rangoVisible) {
+                return true; // No validar si no están visibles
+            }
+
+            const ini = parseInt(anioIni.value);
+            const fin = parseInt(anioFin.value);
+            
+            if (ini > fin) {
+                return false;
+            }
+            return true;
+        }
+
+        function mostrarErrorAnio(mensaje) {
+            // Remover error previo si existe
+            const errorPrevio = document.getElementById('error-anio');
+            if (errorPrevio) {
+                errorPrevio.remove();
+            }
+            
+            // Crear elemento de error
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'error-anio';
+            errorDiv.style.color = 'red';
+            errorDiv.style.fontWeight = 'bold';
+            errorDiv.style.marginTop = '5px';
+            errorDiv.textContent = mensaje;
+            
+            // Insertar después del campo anio_fin
+            anioFin.parentNode.insertBefore(errorDiv, anioFin.nextSibling);
+        }
+
+        function limpiarErrorAnio() {
+            const errorDiv = document.getElementById('error-anio');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        }
+
+        // Validar cuando cambian los selectores
+        anioIni.addEventListener('change', function() {
+            if (!validarRangoAnio()) {
+                mostrarErrorAnio('Error: El año inicial no puede ser mayor que el año final');
+            } else {
+                limpiarErrorAnio();
+            }
+        });
+
+        anioFin.addEventListener('change', function() {
+            if (!validarRangoAnio()) {
+                mostrarErrorAnio('Error: El año inicial no puede ser mayor que el año final');
+            } else {
+                limpiarErrorAnio();
+            }
+        });
+
+        // Retornar función para validar desde el formulario
+        return {
+            validar: validarRangoAnio,
+            mostrarError: mostrarErrorAnio,
+            limpiarError: limpiarErrorAnio
+        };
+    }
+
+    // Configurar validación del formulario
+    function configurarValidacionFormulario() {
+        const form = document.querySelector('form');
+        
+        form.addEventListener('submit', function(e) {
+            let hayErrores = false;
+            
+            // Validar edad
+            if (!validacionEdad.validar()) {
+                validacionEdad.mostrarError('Error: No se puede generar el producto. La edad inicial no puede ser mayor que la edad final');
+                hayErrores = true;
+            } else {
+                validacionEdad.limpiarError();
+            }
+            
+            // Validar año
+            if (!validacionAnio.validar()) {
+                validacionAnio.mostrarError('Error: No se puede generar el producto. El año inicial no puede ser mayor que el año final');
+                hayErrores = true;
+            } else {
+                validacionAnio.limpiarError();
+            }
+            
+            if (hayErrores) {
+                e.preventDefault();
+                return false;
+            }
+            
+            return true;
+        });
+    }
+
+    // Ejecutar al cargar la página
+    document.addEventListener("DOMContentLoaded", function () {
+        mostrarCamposPorProducto();
+        mostrarFiltrosNivel();
+        validacionEdad = configurarValidacionEdad();
+        validacionAnio = configurarValidacionAnio();
+        configurarValidacionFormulario();
+    });
+</script>
+
+{% if form_values %}
+<script>
+    // Script adicional para mantener la visibilidad correcta cuando hay valores preseleccionados
+    document.addEventListener("DOMContentLoaded", function () {
+        const producto = "{{ form_values.producto }}";
+        if (producto === 'Line plot') {
+            document.getElementById('campo-anio').style.display = 'none';
+            document.getElementById('campo-anio-rango').style.display = 'block';
+        } else {
+            document.getElementById('campo-anio').style.display = 'block';
+            document.getElementById('campo-anio-rango').style.display = 'none';
+        }
+    });
+</script>
+{% endif %}
+
+</body>
+</html>
